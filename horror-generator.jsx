@@ -155,7 +155,7 @@ Respond ONLY with valid JSON, no markdown, no backticks:
 ]`;
 
     try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
+      const response = await fetch("/api/anthropic/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -164,14 +164,27 @@ Respond ONLY with valid JSON, no markdown, no backticks:
           messages: [{ role: "user", content: prompt }],
         }),
       });
+      if (!response.ok) {
+        const msg = await response.text();
+        throw new Error(msg || `Request failed (${response.status})`);
+      }
       const data = await response.json();
-      const text = data.content.filter((b) => b.type === "text").map((b) => b.text).join("");
+      const blocks = Array.isArray(data?.content) ? data.content : [];
+      const text = blocks
+        .filter((b) => b?.type === "text")
+        .map((b) => b.text)
+        .join("");
       const clean = text.replace(/```json|```/g, "").trim();
       const parsed = JSON.parse(clean);
       setResults(parsed);
       setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
     } catch (err) {
-      setError("The void returned nothing... Try again.");
+      const msg = String(err?.message ?? err ?? "");
+      const hint =
+        msg.includes("Missing ANTHROPIC_API_KEY")
+          ? "Missing ANTHROPIC_API_KEY. Create a .env file (project root) with ANTHROPIC_API_KEY=YOUR_KEY, then restart `npm run dev`."
+          : null;
+      setError(hint || "The void returned nothing... Try again.");
       console.error(err);
     } finally {
       setLoading(false);

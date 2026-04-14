@@ -4,16 +4,19 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently -n api,web -c magenta,cyan \"node api/server.js\" \"vite\"",
     "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
+    "dotenv": "latest",
+    "express": "latest",
     "react": "latest",
     "react-dom": "latest"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "latest",
+    "concurrently": "latest",
     "vite": "latest"
   }
 }
